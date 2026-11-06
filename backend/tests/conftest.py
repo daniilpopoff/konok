@@ -1,9 +1,12 @@
 import os
 import tempfile
 
-os.environ.setdefault("DATABASE_URL", "postgresql+psycopg://postgres@/konok_test?host=/tmp")
+# Тесты ВСЕГДА идут в отдельную базу: они очищают таблицы. Рабочую DATABASE_URL игнорируем.
+os.environ["DATABASE_URL"] = os.getenv("TEST_DATABASE_URL", "postgresql+psycopg://postgres@/konok_test?host=/tmp")
 os.environ["MEDIA_DIR"] = tempfile.mkdtemp(prefix="konok-media-")
 os.environ["EXPIRE_INTERVAL_SECONDS"] = "3600"
+# Тесты шлют этот секрет в вебхук — не зависим от значения в .env.
+os.environ["TELEGRAM_WEBHOOK_SECRET"] = "dev-webhook-secret"
 os.environ.setdefault("SECRET_KEY", "test-secret-key-that-is-long-enough-1234567890")
 
 import pytest  # noqa: E402

@@ -23,7 +23,8 @@
 ## Команды
 - Запуск: `docker compose up --build` → http://localhost:8000/docs
 - Демо-данные: `docker compose exec backend python seed.py` (azamat@konok.kg / password123)
-- Тесты: `docker compose exec backend pytest -q` (нужна база konok_test, см. README) — перед каждым коммитом зелёные.
+- Тесты (один раз создать базу: `docker compose exec db createdb -U konok konok_test`):
+  `docker compose exec backend pytest -q` — идут в konok_test (TEST_DATABASE_URL), перед каждым коммитом зелёные.
 
 ## Ближайшие задачи бэкенда
 1. Alembic-миграции вместо `create_all`.

@@ -17,6 +17,7 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: postgresql+psycopg://konok:konok@db:5432/konok
+      TEST_DATABASE_URL: postgresql+psycopg://konok:konok@db:5432/konok_test
       MEDIA_DIR: /data/media
     volumes:
       - media:/data/media

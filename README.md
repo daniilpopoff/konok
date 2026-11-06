@@ -23,8 +23,8 @@ uvicorn app.main:app --reload
 ## Тесты
 
 ```bash
-createdb konok_test
-cd backend && DATABASE_URL=postgresql+psycopg://postgres@localhost:5432/konok_test pytest -q
+docker compose exec db createdb -U konok konok_test   # один раз
+docker compose exec backend pytest -q                  # тесты идут только в konok_test
 ```
 
 21 тест: сквозной сценарий брони, 50 параллельных броней, истечение неоплаченной брони, отклонение чека,
