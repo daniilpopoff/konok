@@ -10,7 +10,21 @@
   Остаток и залог — при передаче ключей, в системе только отметки. Оплата на счёт ИП — потом.
 - Даты держатся 30 минут до загрузки чека. Только посуточно (модель хранит дату+время ради почасовой в будущем).
 - Нет: общего каталога, «умной» части, мобильного приложения (потом), iCal, мультиязычности (потом).
-- Полное ТЗ и PRD — в Claude Docs; архитектура и API — `docs/architecture.md`.
+- ТЗ — `docs/TZ.md`, PRD — `docs/PRD.md`, архитектура и API — `docs/architecture.md`. Прочитай их перед крупной задачей.
+- Фронтенд — `frontend/` (React 18 + TypeScript + Vite + react-router, без UI-библиотек), работает строго по API из
+  `docs/architecture.md`. Запросы идут на `/api`, Vite проксирует их на бэкенд. Гостевая часть — `src/pages/guest`,
+  CRM — `src/pages/app`, общие стили и токены — `src/styles.css`.
+
+## Бренд
+- Цвета: Konok Teal #0E6B58 (основной), Солнце #F2A93B (акцент, «ждёт»), Ночь #14201D (текст), Войлок #F7F5F0 (фон),
+  линии #E6E2D8, вторичный текст #5B6B66. Шрифт Manrope 400/600/800. Знак — түндүк-ключ.
+- Цвета статусов брони одинаковые везде: ждёт оплаты — светло-жёлтый с пунктиром, чек на проверке — #F2A93B,
+  подтверждена — teal, живёт — #062E26, выехал — #5B6B66, блок — #D9D5CC.
+- Гостевые экраны делаем сначала под телефон (гости приходят из Instagram), кнопки не меньше 44 px.
+
+## Как мы работаем
+- Этот файл — общая память. Принято новое решение (по продукту, API, стеку) — допиши его сюда или в `docs/` и закоммить.
+- Перед работой: `git pull`. После: тесты зелёные → commit → push. Белек работает в той же репе, в своей ветке.
 
 ## Код
 - `backend/` — Python 3.13, FastAPI, SQLAlchemy 2.0, PostgreSQL 16 (+btree_gist), pytest.
@@ -21,7 +35,8 @@
 - Чеки — в `media/private`, отдаются только через API с проверкой прав.
 
 ## Команды
-- Запуск: `docker compose up --build` → http://localhost:8000/docs
+- Запуск: `docker compose up --build` → сайт http://localhost:5173, API http://localhost:8000/docs
+- Проверка фронта: `cd frontend && npm run typecheck`
 - Демо-данные: `docker compose exec backend python seed.py` (azamat@konok.kg / password123)
 - Тесты (один раз создать базу: `docker compose exec db createdb -U konok konok_test`):
   `docker compose exec backend pytest -q` — идут в konok_test (TEST_DATABASE_URL), перед каждым коммитом зелёные.

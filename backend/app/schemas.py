@@ -37,6 +37,8 @@ class UserOut(ORM):
     name: str
     role: str
     account_id: int | None
+    account_slug: str | None = None
+    account_name: str | None = None
     telegram_linked: bool = False
 
 

@@ -17,6 +17,8 @@ RESERVED_SLUGS = {"api", "admin", "b", "app", "login", "register", "media", "sta
 
 def user_out(u: User) -> UserOut:
     return UserOut(id=u.id, email=u.email, name=u.name, role=u.role, account_id=u.account_id,
+                   account_slug=u.account.slug if u.account else None,
+                   account_name=u.account.name if u.account else None,
                    telegram_linked=u.telegram_chat_id is not None)
 
 
@@ -61,6 +63,13 @@ def add_manager(data: ManagerIn, owner: User = Depends(owner_only), db: Session 
 @router.get("/team", response_model=list[UserOut])
 def team(owner: User = Depends(owner_only), db: Session = Depends(get_db)):
     return [user_out(u) for u in db.scalars(select(User).where(User.account_id == owner.account_id))]
+
+
+@router.get("/settings")
+def get_settings(owner: User = Depends(owner_only)):
+    acc = owner.account
+    return {"name": acc.name, "slug": acc.slug, "payment_details": acc.payment_details,
+            "payment_qr": acc.payment_qr_path}
 
 
 @router.patch("/settings")

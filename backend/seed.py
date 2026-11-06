@@ -6,11 +6,22 @@ from datetime import timedelta
 from decimal import Decimal
 
 from app.db import SessionLocal, init_db
-from app.models import Account, Apartment, Role, User
+import os
+
+from app.config import settings
+from app.models import Account, Apartment, DepositStatus, Expense, Review, Role, User
 from app.security import hash_password
 from app.services import booking as svc
 
 init_db()
+# Демо-чек (маленькая PNG-картинка), чтобы у брони «чек на проверке» был файл
+_receipt = os.path.join(settings.media_dir, "private", "receipts", "demo.png")
+os.makedirs(os.path.dirname(_receipt), exist_ok=True)
+with open(_receipt, "wb") as fh:
+    import base64
+    fh.write(base64.b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="))
+
 with SessionLocal() as db:
     acc = Account(slug="azamat", name="Квартиры Азамата",
                   payment_details="MBank: +996 555 000 000 (Азамат Т.)")
@@ -44,5 +55,33 @@ with SessionLocal() as db:
                              check_out=t + timedelta(5), guests_count=1, source="instagram")
     svc.create_block(db, flats[2], check_in=t + timedelta(3), check_out=t + timedelta(6), reason="Ремонт ванной",
                      actor="seed")
+    # Чек на проверке — чтобы было что подтвердить
+    pending, _ = svc.create_guest_booking(db, flats[0], name="Айбек Сыдыков", phone="+996777000111",
+                                          check_in=t + timedelta(6), check_out=t + timedelta(8), guests_count=2,
+                                          source="lalafo")
+    svc.attach_receipt(db, pending, "private/receipts/demo.png")
+    # Прошлые брони: заселились, выехали, оставили отзыв — для аналитики и отзывов
+    past = [
+        (flats[0], "Айжан Токтогулова", "+996555222333", -12, -9, Decimal("10500"), 5, "Чисто, тепло, всё как на фото."),
+        (flats[1], "Нурлан Жумабаев", "+996555909090", -8, -4, Decimal("8800"), 4, "Удобно, но шумновато вечером."),
+        (flats[2], "Жанна Бекова", "+996700121212", -6, -3, Decimal("5400"), 5, "Хозяин ответил за 5 минут!"),
+    ]
+    for flat, name, phone, a, b, total, rating, text in past:
+        bk = svc.create_manual_booking(db, flat, name=name, phone=phone, check_in=t + timedelta(a),
+                                       check_out=t + timedelta(b), guests_count=2, status="confirmed",
+                                       total_price=total, actor="seed")
+        bk.source = "lalafo" if rating == 5 else "instagram"
+        svc.check_in(db, bk, balance_paid=True, deposit_received=True, actor="seed")
+        svc.check_out(db, bk, actor="seed")
+        if bk.deposit_status == DepositStatus.RECEIVED.value:
+            svc.settle_deposit(db, bk, action="returned", withheld=Decimal("0"), note="", actor="seed")
+        svc.close(db, bk, actor="seed")
+        db.add(Review(booking_id=bk.id, apartment_id=flat.id, rating=rating, text=text))
+    db.add_all([
+        Expense(account_id=acc.id, apartment_id=flats[0].id, category="cleaning", amount=Decimal("1500"),
+                spent_on=t - timedelta(9), note="Уборка после гостя"),
+        Expense(account_id=acc.id, apartment_id=flats[1].id, category="utilities", amount=Decimal("2300"),
+                spent_on=t - timedelta(5), note="Свет и газ"),
+    ])
     db.commit()
 print("Готово: azamat@konok.kg / password123, витрина /azamat")

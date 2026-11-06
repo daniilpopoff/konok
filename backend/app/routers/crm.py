@@ -66,6 +66,17 @@ def patch_guest(guest_id: int, data: GuestPatch, user: User = Depends(staff), db
 
 
 # ---------- отзывы ----------
+@router.get("/reviews")
+def list_reviews(user: User = Depends(staff), db: Session = Depends(get_db)):
+    rows = db.execute(
+        select(Review, Booking).join(Booking, Booking.id == Review.booking_id)
+        .where(Booking.account_id == user.account_id).order_by(Review.created_at.desc()).limit(200)
+    ).all()
+    return [{"id": r.id, "booking_id": b.id, "apartment_id": b.apartment_id, "apartment_title": b.apartment.title,
+             "guest_name": b.guest.name if b.guest else "Гость", "rating": r.rating, "text": r.text,
+             "owner_reply": r.owner_reply, "created_at": r.created_at} for r, b in rows]
+
+
 @router.post("/reviews/{review_id}/reply")
 def reply_review(review_id: int, data: ReviewReplyIn, user: User = Depends(owner_only), db: Session = Depends(get_db)):
     r = db.get(Review, review_id)
